@@ -5,6 +5,8 @@
 
 @synthesize bridge = _bridge;
 
+static NSMutableArray *localArray = nil;
+
 - (dispatch_queue_t)methodQueue
 {
     return dispatch_get_main_queue();
@@ -12,7 +14,10 @@
 
 - (NSArray<NSString *> *)supportedEvents
 {
-    return @[@"pushOpened",@"pushReceived"];
+    if (localArray == nil) {
+        return @[@"pushOpened",@"pushReceived"];
+    }
+    return localArray;
 }
 
 - (void)sendEvent:(NSString *)name withValue:(id)value
@@ -29,6 +34,18 @@
     }
 }
 
+- (void)addToLocalArray:(NSString *)name
+{
+    if (localArray == nil) {
+        localArray = [[NSMutableArray alloc] init];
+        [localArray addObject:@"pushOpened"];
+        [localArray addObject:@"pushReceived"];
+    }
+    if (![localArray containsObject:name]) {
+        [localArray addObject:name];
+    }
+}
+
 RCT_EXPORT_MODULE(Taplytics);
 
 RCT_REMAP_METHOD(_newSyncBool, name:(NSString *)name defaultBoolValue:(BOOL)defaultValue resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
@@ -39,6 +56,7 @@ RCT_REMAP_METHOD(_newSyncBool, name:(NSString *)name defaultBoolValue:(BOOL)defa
 
 RCT_REMAP_METHOD(_newSyncString, name:(NSString *)name defaultStringValue:(NSString *)defaultValue resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
+
     TaplyticsVar* variable = [TaplyticsVar taplyticsSyncVarWithName:name defaultValue:defaultValue];
     resolve((NSString *)variable.value);
 }
@@ -73,6 +91,7 @@ RCT_REMAP_METHOD(_newSyncObject, name:(NSString *)name defaultValue:(NSString *)
 
 RCT_EXPORT_METHOD(_newAsyncBool:(NSString *)name defaultValue:(BOOL)defaultValue)
 {
+    [self addToLocalArray:name];
     [TaplyticsVar taplyticsVarWithName:name defaultValue:@(defaultValue) updatedBlock:^(NSObject* value) {
         [self sendEvent:name withValue:value];
     }];
@@ -80,6 +99,7 @@ RCT_EXPORT_METHOD(_newAsyncBool:(NSString *)name defaultValue:(BOOL)defaultValue
 
 RCT_EXPORT_METHOD(_newAsyncString:(NSString *)name defaultValue:(NSString *)defaultValue)
 {
+    [self addToLocalArray:name];
     [TaplyticsVar taplyticsVarWithName:name defaultValue:defaultValue updatedBlock:^(NSObject* value) {
         [self sendEvent:name withValue:value];
     }];
@@ -87,6 +107,7 @@ RCT_EXPORT_METHOD(_newAsyncString:(NSString *)name defaultValue:(NSString *)defa
 
 RCT_EXPORT_METHOD(_newAsyncNumber:(NSString *)name defaultValue:(nonnull NSNumber *)defaultValue)
 {
+    [self addToLocalArray:name];
     [TaplyticsVar taplyticsVarWithName:name defaultValue:defaultValue updatedBlock:^(NSObject* value) {
         [self sendEvent:name withValue:value];
     }];
@@ -94,6 +115,7 @@ RCT_EXPORT_METHOD(_newAsyncNumber:(NSString *)name defaultValue:(nonnull NSNumbe
 
 RCT_EXPORT_METHOD(_newAsyncObject:(NSString *)name defaultValue:(NSString *)defaultValue)
 {
+    [self addToLocalArray:name];
     NSData* data = [defaultValue dataUsingEncoding:NSUTF8StringEncoding];
     NSError* err;
     @try {
@@ -252,3 +274,4 @@ RCT_REMAP_METHOD(performBackgroundFetch, resolveFetch:(RCTPromiseResolveBlock)re
 }
 
 @end
+
