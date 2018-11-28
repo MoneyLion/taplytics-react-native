@@ -38,10 +38,6 @@ Taplytics.newSyncVariable = (name, defaultValue) => {
 
 Taplytics.newAsyncVariable = (name, defaultValue, callback) => {
   DeviceEventEmitter.addListener(name, (event) => {
-    let value = event;
-    if (_.isPlainObject(defaultValue)) {
-      value = JSON.parse(value)
-    }
     setVariable(name, value)
     callback && callback(value)
   })
