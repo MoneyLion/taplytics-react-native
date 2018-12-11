@@ -47,6 +47,9 @@ Taplytics.newAsyncVariable = (name, defaultValue, callback) => {
       } catch (e) {
         console.log('Variable parsing error', e);
       }
+    } else {
+      setVariable(name, value)
+      callback && callback(value)
     }
   })
 
